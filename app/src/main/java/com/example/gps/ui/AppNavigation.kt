@@ -2,9 +2,9 @@ package com.example.gps.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,8 +27,8 @@ import com.example.gps.ui.tracking.TrackingScreen
 // 1. Definimos las rutas de las pestañas
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Tracking : Screen("tracking", "Grabar", Icons.Default.LocationOn)
-    object MapScreen : Screen("map", "Mapa", Icons.Default.Map)
-    object Gallery : Screen("gallery", "Galería", Icons.Default.List)
+    object MapScreen : Screen("map", "Mapa", Icons.Default.Place)
+    object Gallery : Screen("gallery", "Galería", Icons.AutoMirrored.Filled.List)
 }
 
 val bottomNavItems = listOf(

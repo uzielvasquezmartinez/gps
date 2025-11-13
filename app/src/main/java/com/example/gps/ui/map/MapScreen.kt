@@ -8,48 +8,46 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gps.viewmodel.MapViewModel
+// IMPORTS CORRECTOS: Solo usamos la librería de Utsman
 import com.utsman.osmandcompose.OpenStreetMap
 import com.utsman.osmandcompose.Polyline
-import org.osmdroid.compose.OpenStreetMap
-import org.osmdroid.compose.rememberMapController
+import com.utsman.osmandcompose.rememberCameraState
 import org.osmdroid.util.GeoPoint
-
 
 @Composable
 fun MapScreen(
     viewModel: MapViewModel = viewModel()
 ) {
-    val allPoints by viewModel.allTripPoints.collectAsState()
-    // Esto se mantiene igual
+    val allPoints by viewModel.allTripPoints.collectAsState(initial = emptyList())
     val pointsByTrip = allPoints.groupBy { it.tripId }
-    // CAMBIO: Usamos el controlador de OSM en lugar de CameraPositionState
-    val mapController = rememberMapController()
 
-    // NUEVO: Usamos LaunchedEffect para centrar el mapa cuando los puntos carguen
+    // Usamos rememberCameraState de la librería correcta
+    val cameraState = rememberCameraState {
+        geoPoint = GeoPoint(40.416775, -3.703790) // Por defecto en Madrid
+        zoom = 6.0
+    }
+
+    // Efecto para centrar el mapa cuando los puntos cargan
     LaunchedEffect(allPoints) {
         allPoints.firstOrNull()?.let {
-            // Centrar la cámara en el primer punto (si existe)
-            // 1. Convertimos a GeoPoint
             val firstGeoPoint = GeoPoint(it.latitude, it.longitude)
-            // 2. Le decimos al controlador que se mueva allí
-            mapController.setZoom(10.0) // OSM usa Double para el zoom
-            mapController.setCenter(firstGeoPoint)
+            cameraState.geoPoint = firstGeoPoint // Actualizamos la posición
+            cameraState.zoom = 15.0             // y el zoom
         }
     }
 
-    // CAMBIO: Usamos el Composable de OpenStreetMap
+    // Usamos el OpenStreetMap correcto, que pide un cameraState
     OpenStreetMap(
         modifier = Modifier.fillMaxSize(),
-        controller = mapController // Le pasamos el controlador
+        cameraState = cameraState
     ) {
-        pointsByTrip.forEach { (tripId, points) ->
-            // CAMBIO: Convertimos la lista de puntos a GeoPoint en lugar de LatLng
+        // Dibujamos una línea por cada viaje que tengamos
+        pointsByTrip.forEach { (_, points) ->
             val geoPointList = points.map { GeoPoint(it.latitude, it.longitude) }
             if (geoPointList.size >= 2) {
-                // CAMBIO: Usamos el Composable Polyline de OSM
+                // Usamos el Polyline correcto, que pide geoPoints
                 Polyline(
-                    points = geoPointList
-                    // Puedes añadir colores, etc., de forma similar
+                    geoPoints = geoPointList
                 )
             }
         }
