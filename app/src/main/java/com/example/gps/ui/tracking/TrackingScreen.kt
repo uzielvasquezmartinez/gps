@@ -1,8 +1,6 @@
 package com.example.gps.ui.tracking
 
 import android.Manifest
-import android.content.Context
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -18,39 +16,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.gps.viewmodel.TrackingViewModel
-import java.io.File
+
 
 @Composable
 fun TrackingScreen(
+    navController: NavController, // ¡¡¡PARÁMETRO AÑADIDO!!!
     viewModel: TrackingViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-
-    // --- Lógica de Cámara ---
-    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) } 
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            // Se llama cuando la cámara termina
-            if (success) {
-                tempPhotoUri?.let { uri ->
-                    viewModel.savePhotoAndUpdateTrip(uri)
-                }
-            }
-        }
-    )
 
     // --- Lógica de Permisos ---
     val permissionsToRequest = arrayOf(
@@ -61,15 +40,14 @@ fun TrackingScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissions ->
-            // Aquí puedes manejar si el usuario deniega los permisos
             val allGranted = permissions.values.all { it }
             if (!allGranted) {
-                // Mostrar un mensaje al usuario, por ejemplo, con un Snackbar.
+                // Manejar permisos denegados
             }
         }
     )
 
-    // Pedir permisos en cuanto la pantalla aparece
+    // Pedir permisos al inicio
     LaunchedEffect(key1 = true) {
         permissionLauncher.launch(permissionsToRequest)
     }
@@ -87,15 +65,14 @@ fun TrackingScreen(
                 onClick = {
                     if (uiState.isRecording) {
                         // 1. Si está grabando, paramos lógicamente
-                        viewModel.onStartStopClick() // Llama a stopRecording()
-                        // 2. Preparamos la URI y lanzamos la cámara para la foto final
-                        generateTempUri(context)?.let {
-                            tempPhotoUri = it
-                            cameraLauncher.launch(it)
+                        viewModel.onStartStopClick()
+                        // 2. Navegamos a nuestra propia CameraScreen con el ID del viaje
+                        uiState.currentTripId?.let {
+                            navController.navigate("camera/$it")
                         }
                     } else {
                         // Si no está grabando, empezamos
-                        viewModel.onStartStopClick() // Llama a startRecording()
+                        viewModel.onStartStopClick()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -110,17 +87,5 @@ fun TrackingScreen(
                 Text("Grabando recorrido #${uiState.currentTripId}...")
             }
         }
-    }
-}
-
-// Función helper para crear una URI temporal donde guardar la foto
-private fun generateTempUri(context: Context): Uri? {
-    val file = File(context.filesDir, "trip_photo_${System.currentTimeMillis()}.jpg")
-    val authority = "${context.packageName}.provider"
-    return try {
-        FileProvider.getUriForFile(context, authority, file)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
     }
 }

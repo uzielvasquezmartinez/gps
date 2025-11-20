@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permiso para el directorio de caché externo -->
+    <external-cache-path name="external_cache" path="." />
+    <!-- Permiso para el directorio de archivos internos -->
     <files-path name="internal_files" path="." />
 </paths>

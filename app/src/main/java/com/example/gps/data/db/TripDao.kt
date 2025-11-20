@@ -36,7 +36,7 @@ interface TripDao {
     @Query("SELECT * FROM location_points WHERE tripId = :tripId ORDER BY timestamp ASC")
     fun getLocationPointsForTrip(tripId: Long): Flow<List<LocationPoint>>
 
-    // Ya no es necesaria, la lógica se simplificará
-    // @Query("SELECT * FROM trips WHERE endTime IS NULL ORDER BY startTime DESC LIMIT 1")
-    // suspend fun getLastUnfinishedTrip(): Trip?
+    // ¡¡¡FUNCIÓN RESTAURADA PARA EL MAPA GLOBAL!!!
+    @Query("SELECT * FROM location_points ORDER BY timestamp ASC")
+    fun getAllLocationPoints(): Flow<List<LocationPoint>>
 }

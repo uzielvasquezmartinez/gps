@@ -15,8 +15,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,24 +34,8 @@ fun EditTripScreen(
     photoUri: String,
     viewModel: EditTripViewModel = viewModel()
 ) {
-    val trip by viewModel.trip.collectAsState()
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-
-    // Cargar los datos del viaje cuando la pantalla se inicia
-    LaunchedEffect(tripId) {
-        if (tripId != -1L) { // -1L es el valor por defecto si es un viaje nuevo
-            viewModel.loadTrip(tripId)
-        }
-    }
-
-    // Actualizar los campos de texto cuando se cargan los datos del viaje
-    LaunchedEffect(trip) {
-        trip?.let {
-            title = it.title
-            description = it.description
-        }
-    }
 
     Scaffold {
         Column(
@@ -91,9 +73,12 @@ fun EditTripScreen(
 
             Button(
                 onClick = {
-                    // Guardamos y volvemos a la galería
-                    viewModel.saveOrUpdateTrip(tripId, photoUri, title, description)
-                    navController.popBackStack(navController.graph.startDestinationId, false)
+                    // --- LLAMADA CORREGIDA ---
+                    viewModel.saveNewTrip(tripId, photoUri, title, description)
+                    // Navegamos a la galería después de guardar
+                    navController.navigate("gallery") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

@@ -8,7 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gps.viewmodel.MapViewModel
-// IMPORTS CORRECTOS: Solo usamos la librería de Utsman
+// IMPORTS CORRECTOS
 import com.utsman.osmandcompose.OpenStreetMap
 import com.utsman.osmandcompose.Polyline
 import com.utsman.osmandcompose.rememberCameraState
@@ -18,10 +18,10 @@ import org.osmdroid.util.GeoPoint
 fun MapScreen(
     viewModel: MapViewModel = viewModel()
 ) {
-    val allPoints by viewModel.allTripPoints.collectAsState(initial = emptyList())
+    // ¡¡¡VARIABLE CORREGIDA!!!
+    val allPoints by viewModel.allPoints.collectAsState(initial = emptyList())
     val pointsByTrip = allPoints.groupBy { it.tripId }
 
-    // Usamos rememberCameraState de la librería correcta
     val cameraState = rememberCameraState {
         geoPoint = GeoPoint(40.416775, -3.703790) // Por defecto en Madrid
         zoom = 6.0
@@ -29,23 +29,21 @@ fun MapScreen(
 
     // Efecto para centrar el mapa cuando los puntos cargan
     LaunchedEffect(allPoints) {
-        allPoints.firstOrNull()?.let {
-            val firstGeoPoint = GeoPoint(it.latitude, it.longitude)
+        allPoints.firstOrNull()?.let { firstPoint ->
+            val firstGeoPoint = GeoPoint(firstPoint.latitude, firstPoint.longitude)
             cameraState.geoPoint = firstGeoPoint // Actualizamos la posición
             cameraState.zoom = 15.0             // y el zoom
         }
     }
 
-    // Usamos el OpenStreetMap correcto, que pide un cameraState
     OpenStreetMap(
         modifier = Modifier.fillMaxSize(),
         cameraState = cameraState
     ) {
         // Dibujamos una línea por cada viaje que tengamos
         pointsByTrip.forEach { (_, points) ->
-            val geoPointList = points.map { GeoPoint(it.latitude, it.longitude) }
+            val geoPointList = points.map { point -> GeoPoint(point.latitude, point.longitude) }
             if (geoPointList.size >= 2) {
-                // Usamos el Polyline correcto, que pide geoPoints
                 Polyline(
                     geoPoints = geoPointList
                 )

@@ -9,14 +9,17 @@ import kotlinx.coroutines.flow.Flow
 class TripRepository(context: Context) {
     private val tripDao = AppDatabase.getDatabase(context).tripDao()
 
-    // --- Flujos de Datos para la UI ---
+    // --- Funciones para los ViewModels ---
+
     fun getAllCompletedTrips(): Flow<List<Trip>> = tripDao.getAllCompletedTrips()
 
-    fun getLocationPointsFor(tripId: Long): Flow<List<LocationPoint>> {
+    fun getLocationPointsForTrip(tripId: Long): Flow<List<LocationPoint>> {
         return tripDao.getLocationPointsForTrip(tripId)
     }
 
-    // --- Acciones de la UI ---
+    // ¡¡¡FUNCIÓN CORREGIDA PARA EL MAPA GLOBAL!!!
+    fun getAllLocationPoints(): Flow<List<LocationPoint>> = tripDao.getAllLocationPoints()
+
     suspend fun startNewTrip(): Long {
         return tripDao.startNewTrip(Trip())
     }
@@ -29,6 +32,7 @@ class TripRepository(context: Context) {
         return tripDao.getTripById(tripId)
     }
 
+    // Se usa al guardar un viaje nuevo desde la pantalla de edición
     suspend fun saveTripDetails(tripId: Long, photoUri: String, title: String, description: String) {
         val trip = tripDao.getTripById(tripId)
         trip?.let {
@@ -40,6 +44,7 @@ class TripRepository(context: Context) {
         }
     }
 
+    // Se usará en el futuro para editar
     suspend fun updateTripDetails(tripId: Long, title: String, description: String) {
         val trip = tripDao.getTripById(tripId)
         trip?.let {
@@ -50,7 +55,6 @@ class TripRepository(context: Context) {
     }
 
     suspend fun deleteTrip(trip: Trip) {
-        // Borramos los puntos y luego el viaje
         tripDao.deletePointsForTrip(trip.id)
         tripDao.deleteTrip(trip)
     }

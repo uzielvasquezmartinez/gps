@@ -1,7 +1,6 @@
 package com.example.gps.viewmodel
 
 import android.app.Application
-import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gps.data.db.LocationPoint
@@ -36,22 +35,20 @@ class TrackingViewModel(application: Application) : AndroidViewModel(application
 
     fun onStartStopClick() {
         if (_uiState.value.isRecording) {
-            // Solo para la lógica de detener la grabación de puntos
-            locationJob?.cancel()
-            _uiState.update { it.copy(isRecording = false) }
+            stopRecording()
         } else {
             startRecording()
         }
     }
 
     private fun startRecording() {
-        locationJob?.cancel()
+        locationJob?.cancel() // Cancela cualquier trabajo anterior
         viewModelScope.launch {
             val newTripId = repository.startNewTrip()
             _uiState.update { TrackingUiState(isRecording = true, currentTripId = newTripId) }
 
-            locationJob = locationClient.getLocationUpdates(5000L)
-                .catch { e -> e.printStackTrace() } 
+            locationJob = locationClient.getLocationUpdates(5000L) // cada 5 seg
+                .catch { e -> e.printStackTrace() } // Manejar error
                 .onEach { location ->
                     val point = LocationPoint(
                         tripId = newTripId,
@@ -61,18 +58,14 @@ class TrackingViewModel(application: Application) : AndroidViewModel(application
                     )
                     repository.saveLocationPoint(point)
                 }
-                .launchIn(viewModelScope)
+                .launchIn(viewModelScope) // Lanza la corutina
         }
     }
 
-    // --- FUNCIÓN UNIFICADA Y CORREGIDA ---
-    // Se llama DESPUÉS de que la cámara toma la foto
-    fun savePhotoAndUpdateTrip(photoUri: Uri) {
-        val tripId = _uiState.value.currentTripId ?: return
-        viewModelScope.launch {
-            repository.stopTripAndAddPhoto(tripId, photoUri.toString())
-            // Reseteamos el estado para el próximo viaje
-            _uiState.update { TrackingUiState(isRecording = false, currentTripId = null) }
-        }
+    private fun stopRecording() {
+        locationJob?.cancel()
+        // Ya no detenemos el viaje aquí, solo la grabación de puntos.
+        // El viaje se finaliza en la pantalla de edición.
+        _uiState.update { it.copy(isRecording = false) }
     }
 }
