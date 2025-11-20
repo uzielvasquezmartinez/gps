@@ -36,26 +36,23 @@ class TrackingViewModel(application: Application) : AndroidViewModel(application
 
     fun onStartStopClick() {
         if (_uiState.value.isRecording) {
-            stopRecording()
+            // Solo para la lógica de detener la grabación de puntos
+            locationJob?.cancel()
+            _uiState.update { it.copy(isRecording = false) }
         } else {
             startRecording()
         }
     }
 
     private fun startRecording() {
-        locationJob?.cancel() // Cancela cualquier trabajo anterior
+        locationJob?.cancel()
         viewModelScope.launch {
-            // 1. Crear un nuevo viaje en la BD
             val newTripId = repository.startNewTrip()
-
-            // 2. Actualizar el estado de la UI
             _uiState.update { TrackingUiState(isRecording = true, currentTripId = newTripId) }
 
-            // 3. Empezar a escuchar el GPS
-            locationJob = locationClient.getLocationUpdates(5000L) // cada 5 seg
-                .catch { e -> e.printStackTrace() } // Manejar error
+            locationJob = locationClient.getLocationUpdates(5000L)
+                .catch { e -> e.printStackTrace() } 
                 .onEach { location ->
-                    // 4. Guardar cada punto en la BD
                     val point = LocationPoint(
                         tripId = newTripId,
                         latitude = location.latitude,
@@ -64,16 +61,11 @@ class TrackingViewModel(application: Application) : AndroidViewModel(application
                     )
                     repository.saveLocationPoint(point)
                 }
-                .launchIn(viewModelScope) // Lanza la corutina
+                .launchIn(viewModelScope)
         }
     }
 
-    // Se llama cuando el usuario presiona "Stop" (antes de la foto)
-    private fun stopRecording() {
-        locationJob?.cancel()
-        _uiState.update { it.copy(isRecording = false) }
-    }
-
+    // --- FUNCIÓN UNIFICADA Y CORREGIDA ---
     // Se llama DESPUÉS de que la cámara toma la foto
     fun savePhotoAndUpdateTrip(photoUri: Uri) {
         val tripId = _uiState.value.currentTripId ?: return
