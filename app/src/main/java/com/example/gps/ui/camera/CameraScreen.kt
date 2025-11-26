@@ -21,20 +21,23 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 @Composable
 fun CameraScreen(navController: NavController, tripId: Long) {
@@ -58,10 +61,9 @@ fun CameraScreen(navController: NavController, tripId: Long) {
             CameraView(
                 modifier = Modifier.padding(padding),
                 onPhotoTaken = { photoUri ->
-                    // Navegamos a la pantalla de edición con los datos necesarios
+                    // --- NAVEGACIÓN CORREGIDA ---
                     val encodedUri = Uri.encode(photoUri.toString())
-                    navController.navigate("edit_trip/$tripId/$encodedUri") {
-                        // Eliminamos la pantalla de la cámara de la pila de navegación
+                    navController.navigate("edit_trip/$tripId?photoUri=$encodedUri") {
                         popUpTo("camera/$tripId") { inclusive = true }
                     }
                 }
@@ -85,11 +87,11 @@ fun CameraView(
 
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
-            factory = {
-                PreviewView(it).apply {
+            factory = { ctx ->
+                PreviewView(ctx).apply {
                     this.controller = cameraController
-                    cameraController.bindToLifecycle(lifecycleOwner)
                     cameraController.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                    cameraController.bindToLifecycle(lifecycleOwner)
                 }
             },
             modifier = Modifier.fillMaxSize()

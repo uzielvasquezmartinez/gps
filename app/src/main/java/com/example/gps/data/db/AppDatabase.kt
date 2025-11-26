@@ -5,7 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Trip::class, LocationPoint::class], version = 1, exportSchema = false)
+// ¡¡¡VERSIÓN INCREMENTADA A 3 PARA FORZAR LA RECONSTRUCCIÓN TOTAL DE LA BD!!!
+@Database(entities = [Trip::class, LocationPoint::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
 

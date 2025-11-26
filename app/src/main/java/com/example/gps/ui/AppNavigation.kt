@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -24,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gps.ui.camera.CameraScreen
+import com.example.gps.ui.detail.TripDetailScreen
 import com.example.gps.ui.edit.EditTripScreen
 import com.example.gps.ui.gallery.GalleryScreen
 import com.example.gps.ui.map.MapScreen
@@ -36,9 +36,11 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Gallery : Screen("gallery", "Galería", Icons.AutoMirrored.Filled.List)
 }
 
-// Rutas que no están en la barra inferior
+// --- RUTAS CON ARGUMENTOS ---
 const val CAMERA_ROUTE_TEMPLATE = "camera/{tripId}"
-const val EDIT_TRIP_ROUTE_TEMPLATE = "edit_trip/{tripId}/{photoUri}"
+// La URI de la foto es ahora un ARGUMENTO OPCIONAL para poder reutilizar la pantalla
+const val EDIT_TRIP_ROUTE_TEMPLATE = "edit_trip/{tripId}?photoUri={photoUri}"
+const val TRIP_DETAIL_ROUTE_TEMPLATE = "trip_detail/{tripId}"
 
 val bottomNavItems = listOf(
     Screen.Tracking,
@@ -77,7 +79,7 @@ fun AppNavigation() {
             startDestination = Screen.Tracking.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Tracking.route) { TrackingScreen(navController = navController, viewModel = viewModel()) }
+            composable(Screen.Tracking.route) { TrackingScreen(navController = navController) }
             composable(Screen.MapScreen.route) { MapScreen() }
             composable(Screen.Gallery.route) { GalleryScreen(navController = navController) }
 
@@ -93,12 +95,23 @@ fun AppNavigation() {
                 route = EDIT_TRIP_ROUTE_TEMPLATE,
                 arguments = listOf(
                     navArgument("tripId") { type = NavType.LongType },
-                    navArgument("photoUri") { type = NavType.StringType }
+                    navArgument("photoUri") {
+                        type = NavType.StringType
+                        nullable = true // Marcamos como opcional
+                    }
                 )
             ) { backStackEntry ->
                 val tripId = backStackEntry.arguments?.getLong("tripId") ?: -1L
-                val photoUri = backStackEntry.arguments?.getString("photoUri") ?: ""
+                val photoUri = backStackEntry.arguments?.getString("photoUri")
                 EditTripScreen(navController, tripId, photoUri)
+            }
+
+            composable(
+                route = TRIP_DETAIL_ROUTE_TEMPLATE,
+                arguments = listOf(navArgument("tripId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val tripId = backStackEntry.arguments?.getLong("tripId") ?: -1L
+                TripDetailScreen(navController, tripId)
             }
         }
     }
